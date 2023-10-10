@@ -12,7 +12,7 @@ A Rust utility library for creating pixel based games, not a game engine.
 
 <!-- cargo-rdme start -->
 
-Utility library for games.
+Utility library for game, not a game engines.
 
 #### Features
 
