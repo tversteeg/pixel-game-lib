@@ -80,7 +80,6 @@ pub(crate) struct AssetManager<T: Loadable> {
 impl<T: Loadable> AssetManager<T> {
     /// Get an asset or throw an exception.
     #[inline]
-    #[track_caller]
     pub(crate) fn get_or_insert(&mut self, id: &str, asset_source: &AssetSource) -> Rc<T> {
         if let Some(asset) = self.get(id) {
             asset
@@ -91,14 +90,12 @@ impl<T: Loadable> AssetManager<T> {
 
     /// Return an asset if it exists.
     #[inline]
-    #[track_caller]
     pub(crate) fn get(&self, id: &str) -> Option<Rc<T>> {
         self.assets.get(id).cloned()
     }
 
     /// Upload a new asset.
     #[inline]
-    #[track_caller]
     pub(crate) fn insert(&mut self, id: &str, asset_source: &AssetSource) -> Rc<T> {
         log::debug!("Asset '{id}' not loaded yet, loading from source");
 
@@ -113,6 +110,14 @@ impl<T: Loadable> AssetManager<T> {
         self.assets.insert(id, asset.clone());
 
         asset
+    }
+
+    /// Remove an asset from the manager.
+    ///
+    /// Will trigger a reload when not embedded.
+    #[inline]
+    pub(crate) fn remove_if_exists(&mut self, id: &str) {
+        self.assets.remove(id);
     }
 }
 
@@ -135,7 +140,6 @@ pub(crate) struct CustomAssetManager {
 impl CustomAssetManager {
     /// Get an asset or throw an exception.
     #[inline]
-    #[track_caller]
     pub(crate) fn get_or_insert<T>(&mut self, id: &str, asset_source: &AssetSource) -> Rc<T>
     where
         T: Loadable,
@@ -189,6 +193,14 @@ impl CustomAssetManager {
             Ok(asset) => asset,
             Err(_) => panic!("Error downcasting type"),
         }
+    }
+
+    /// Remove an asset from the manager.
+    ///
+    /// Will trigger a reload when not embedded.
+    #[inline]
+    pub(crate) fn remove_if_exists(&mut self, id: &str) {
+        self.assets.remove(id);
     }
 }
 

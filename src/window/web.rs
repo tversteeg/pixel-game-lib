@@ -3,27 +3,11 @@
 use miette::{Context, IntoDiagnostic, Result};
 use wasm_bindgen::JsCast;
 use web_sys::HtmlCanvasElement;
-use winit::{event_loop::EventLoop, platform::web::WindowBuilderExtWebSys, window::WindowBuilder};
+use winit::window::WindowAttributes;
 
-use crate::assets::EmbeddedAssets;
-
-use super::{GameConfig, TickFn};
-
-/// Desktop implementation of opening a window.
+/// Inject canvas.
 #[inline(always)]
-pub(crate) async fn window<G, U, R>(
-    window_builder: WindowBuilder,
-    game_state: G,
-    window_config: GameConfig,
-    update: U,
-    render: R,
-    assets: EmbeddedAssets,
-) -> Result<()>
-where
-    G: 'static,
-    U: TickFn<G> + 'static,
-    R: TickFn<G> + 'static,
-{
+pub(crate) fn window_attributes(window_attributes: WindowAttributes) -> Result<WindowAttributes> {
     // Create a canvas the winit window can be attached to
     let window = web_sys::window().ok_or_else(|| miette::miette!("Error finding web window"))?;
     let document = window
@@ -56,32 +40,10 @@ where
         }
     };
 
-    log::debug!("Creating window attached to canvas");
-
-    // Create the window
-    let event_loop = EventLoop::new()
-        .into_diagnostic()
-        .wrap_err("Error setting up event loop for window")?;
-    let window = window_builder
-        .with_canvas(Some(canvas.clone()))
-        .with_prevent_default(true)
-        .build(&event_loop)
-        .into_diagnostic()
-        .wrap_err("Error setting up window")?;
-
     // Ensure the pixels are not rendered with wrong filtering and that the size is correct
     canvas
         .style()
         .set_css_text("image-rendering: pixelated; outline: none; border: none;");
 
-    crate::window::winit_start(
-        event_loop,
-        window,
-        game_state,
-        update,
-        render,
-        window_config,
-        assets,
-    )
-    .await
+    Ok(window_attributes.with_canvas(canvas))
 }
